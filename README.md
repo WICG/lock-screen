@@ -1,6 +1,6 @@
 # Lock Screen API Explainer
 
-Authors: Louise Brett, Glen Robertson
+Authors: Louise Brett (loubrett), Glen Robertson (phoglenix)
 
 ## Overview
 
@@ -18,21 +18,23 @@ Apps that want to be shown on the lock screen would indicate this by declaring a
 }
 ```
 
-To use the API users would start by calling window.getLockScreenData().
-
-```js
-const data = await window.getLockScreenData();
-await data.setData(key, content);
-```
+To use the API users would start by calling `window.getLockScreenData()`.
 
 ### Passing data between lock screen instance and unlocked instance
 
-Apps running on the lock screen must be isolated from regular user data such as cookies and local storage. This means there will be two instances of the app: the main instance that is used when the device is unlocked, and a separate instance that can be launched on the lock screen without access to user data. The app may use this API to send data from the lock screen instance to the unlocked instance of the app and vice versa. Ideally, the web app running on the lock screen should not ask the user to authenticate, operating in an anonymous mode and using the lock screen API to sync data to the user's profile. The goal is to avoid accidentally exposing user data to the lock screen by forcing the app to explicitly send any data needed via this API.
+Apps running on the lock screen must be isolated from regular user data such as cookies and local storage. This means there will be two instances of the app: the main instance that is used when the device is unlocked, and a separate instance that can be launched on the lock screen without access to user data. The app may use this API to send data from the lock screen instance to the unlocked instance of the app and vice versa.
+
+```js
+const data = await window.getLockScreenData();
+await data.setData("my-key", "my-content");
+```
+
+Ideally, the web app running on the lock screen should not ask the user to authenticate, operating in an anonymous mode and using the lock screen API to sync data to the user's profile. The goal is to avoid accidentally exposing user data to the lock screen by forcing the app to explicitly send any data needed via this API.
 
 
 ### Notifying apps about available data
 
-When the device is unlocked, if there is data available, the instance of the app running in the unlocked context is notified by listening for the _dataitemsavailable_ service worker event.
+When the device is unlocked, if there is data available, the instance of the app running in the unlocked context is notified by listening for the `dataitemsavailable` service worker event.
 
 ```js
 self.addEventListener('dataitemsavailable', event => {
