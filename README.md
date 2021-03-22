@@ -1,132 +1,88 @@
-# lock-screen explainer
+# Lock Screen API Explainer
 
-This is the repository for lock-screen. You're welcome to
-[contribute](CONTRIBUTING.md)!
+Authors: Louise Brett, Glen Robertson
 
-To fill this out, please see: https://github.com/w3ctag/w3ctag.github.io/blob/master/explainers.md
-## Authors:
+## Overview
 
-- [Author 1]
-- [Author 2]
-- [etc.]
+This document proposes a Lock Screen API for enabling web apps on the lock screen of a device. This would allow users to use web apps for tasks such as checking a calendar, using a calculator, taking a photo, or taking a note, all without going through the extra step to unlock their device first. Such an API would be applicable to both desktop and mobile platforms, though it will require some operating system support to implement it.
 
-## Participate
-- [Issue tracker]
-- [Discussion forum]
+When apps are run on the lock screen of a device, access to user data should be thoughtfully considered and restricted. For example a camera app running on the lock screen may let the user take photos but not view existing ones, and a calendar app on the lock screen may let the user see an upcoming event but not others. So the proposal includes isolation of lock screen apps, with methods to pass data to and from the lock screen to reduce the risk of apps accidentally exposing user data.
 
-## Table of Contents [if the explainer is longer than one printed page]
+## Proposed API
 
-[You can generate a Table of Contents for markdown documents using a tool like [doctoc](https://github.com/thlorenz/doctoc).]
+Apps that want to be shown on the lock screen would indicate this by declaring a URL in their manifest, to be used to launch the app on the lock screen. The URL must be within the _scope_ defined in the manifest. This URL could be a new manifest entry such as _lock\_screen\_start\_url_ but a more generic configuration would allow other custom launch actions to be added in future. We propose adding a _special\_launchers_ list to the manifest, in which items declare a _URL_ and a _purpose_ that may be recognised by user agents.
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-## Introduction
-
-[The "executive summary" or "abstract".
-Explain in a few sentences what the goals of the project are,
-and a brief overview of how the solution works.
-This should be no more than 1-2 paragraphs.]
-
-## Goals [or Motivating Use Cases, or Scenarios]
-
-[What is the **end-user need** which this project aims to address?]
-
-## Non-goals
-
-[If there are "adjacent" goals which may appear to be in scope but aren't,
-enumerate them here. This section may be fleshed out as your design progresses and you encounter necessary technical and other trade-offs.]
-
-## [API 1]
-
-[For each related element of the proposed solution - be it an additional JS method, a new object, a new element, a new concept etc., create a section which briefly describes it.]
-
-```js
-// Provide example code - not IDL - demonstrating the design of the feature.
-
-// If this API can be used on its own to address a user need,
-// link it back to one of the scenarios in the goals section.
-
-// If you need to show how to get the feature set up
-// (initialized, or using permissions, etc.), include that too.
+```
+"lock_screen": {
+  "start_url": "/some/url" 
+}
 ```
 
-[Where necessary, provide links to longer explanations of the relevant pre-existing concepts and API.
-If there is no suitable external documentation, you might like to provide supplementary information as an appendix in this document, and provide an internal link where appropriate.]
-
-[If this is already specced, link to the relevant section of the spec.]
-
-[If spec work is in progress, link to the PR or draft of the spec.]
-
-## [API 2]
-
-[etc.]
-
-## Key scenarios
-
-[If there are a suite of interacting APIs, show how they work together to solve the key scenarios described.]
-
-### Scenario 1
-
-[Description of the end-user scenario]
+To use the API users would start by calling window.getLockScreenData().
 
 ```js
-// Sample code demonstrating how to use these APIs to address that scenario.
+const data = await window.getLockScreenData();
+await data.setData(key, content);
 ```
 
-### Scenario 2
+### Passing data between lock screen instance and unlocked instance
 
-[etc.]
+Apps running on the lock screen must be isolated from regular user data such as cookies and local storage. This means there will be two instances of the app: the main instance that is used when the device is unlocked, and a separate instance that can be launched on the lock screen without access to user data. The app may use this API to send data from the lock screen instance to the unlocked instance of the app and vice versa. Ideally, the web app running on the lock screen should not ask the user to authenticate, operating in an anonymous mode and using the lock screen API to sync data to the user's profile. The goal is to avoid accidentally exposing user data to the lock screen by forcing the app to explicitly send any data needed via this API.
 
-## Detailed design discussion
 
-### [Tricky design choice #1]
+### Notifying apps about available data
 
-[Talk through the tradeoffs in coming to the specific design point you want to make.]
+When the device is unlocked, if there is data available, the instance of the app running in the unlocked context is notified by listening for the _dataitemsavailable_ service worker event.
 
 ```js
-// Illustrated with example code.
+self.addEventListener('dataitemsavailable', event => {
+  const processData = async () => {
+    const ids = await data.getKeys();
+    for (const id of ids) {
+      const content = await data.getData(id);
+      // ... [Process content]
+      await data.deleteData(id);
+    }
+  };
+  event.waitUntil(processData());
+});
 ```
 
-[This may be an open question,
-in which case you should link to any active discussion threads.]
+## API Interface
 
-### [Tricky design choice 2]
+```webidl
+alias Key = DOMString;
+alias Data = ArrayBuffer;
 
-[etc.]
+[SecureContext]
+interface LockScreenData {
+  // Gets references to all data items available to the app.
+  Promise<sequence<Key>> getKeys();
 
-## Considered alternatives
+  // Retrieves content of the data item identified by |key|.
+  Promise<Data> getData(Key key);
 
-[This should include as many alternatives as you can,
-from high level architectural decisions down to alternative naming choices.]
+  // Sets or replaces content of a data item.
+  Promise<void> setData(Key key, Data data);
 
-### [Alternative 1]
+  // Deletes a data item.
+  Promise<void> deleteData(Key key);
+}
 
-[Describe an alternative which was considered,
-and why you decided against it.]
+// An event named "dataitemsavailable" is dispatched when new data items
+// become available.
+[Exposed=ServiceWorker]
+interface DataItemsAvailableEvent : ExtendableEvent {
+  constructor(DOMString type, optional ExtendableEventInit eventInitDict = {});
+}
+```
 
-### [Alternative 2]
+## Security and Privacy Considerations
 
-[etc.]
+Apps should be careful to expose the minimal user data necessary on the lock screen and it is not recommended to allow users to log in to the app while on the lock screen. User agents could clear data (excluding data in the lock screen API) from the lock screen profile each time it is closed so that if the user had logged in to the app, they would then be logged out. 
 
-## Stakeholder Feedback / Opposition
+It could be worth limiting this API so data can only be transferred one way. Usually this would be to send data from the lock screen instance to the main instance (eg. a camera app) however some apps may prefer to send data in the other direction (eg. a calendar app showing just the title of the next upcoming event). To control this, apps could be required to declare the direction of data transfer in the manifest.
 
-[Implementors and other stakeholders may already have publicly stated positions on this work. If you can, list them here with links to evidence as appropriate.]
+User agents should prevent lock screen apps from navigating outside their scope.
 
-- [Implementor A] : Positive
-- [Stakeholder B] : No signals
-- [Implementor C] : Negative
-
-[If appropriate, explain the reasons given by other implementors for their concerns.]
-
-## References & acknowledgements
-
-[Your design will change and be informed by many people; acknowledge them in an ongoing way! It helps build community and, as we only get by through the contributions of many, is only fair.]
-
-[Unless you have a specific reason not to, these should be in alphabetical order.]
-
-Many thanks for valuable feedback and advice from:
-
-- [Person 1]
-- [Person 2]
-- [etc.]
+Apps displayed on the lock screen must not be able to masquerade as the system UI for logging in. User agents should display some persistent UI while the lock screen app is open.
