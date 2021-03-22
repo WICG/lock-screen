@@ -10,7 +10,7 @@ When apps are run on the lock screen of a device, access to user data should be 
 
 ## Proposed API
 
-Apps that want to be shown on the lock screen would indicate this by declaring a URL in their manifest, to be used to launch the app on the lock screen. The URL must be within the _scope_ defined in the manifest. This URL could be a new manifest entry such as _lock\_screen\_start\_url_ but a more generic configuration would allow other custom launch actions to be added in future. We propose adding a _special\_launchers_ list to the manifest, in which items declare a _URL_ and a _purpose_ that may be recognised by user agents.
+Apps that want to be shown on the lock screen would indicate this by declaring a URL in their manifest, to be used to launch the app on the lock screen. The URL must be [within the scope](https://www.w3.org/TR/appmanifest/#dfn-within-scope) defined in the manifest. This URL could be a new manifest entry such as `lock_screen_start_url` or a more-extensible `lock_screen` dict with a `start_url` member (proposed).
 
 ```
 "lock_screen": {
