@@ -54,7 +54,7 @@ self.addEventListener('dataitemsavailable', event => {
 
 ```webidl
 alias Key = DOMString;
-alias Data = ArrayBuffer;
+alias Data = DOMString;
 
 [SecureContext]
 interface LockScreenData {
