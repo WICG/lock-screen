@@ -31,6 +31,7 @@ await data.setData("my-key", "my-content");
 
 Ideally, the web app running on the lock screen should not ask the user to authenticate, operating in an anonymous mode and using the lock screen API to sync data to the user's profile. The goal is to avoid accidentally exposing user data to the lock screen by forcing the app to explicitly send any data needed via this API.
 
+It might not be possible for an operating system to provide simlultaneous access to the lock screen data store from both (lock screen and unlocked) instances of the app, as they could be running in isolated processes. In that case, the API methods could reject their promises while exclusive access is given to the other instance of the app.
 
 ### Notifying apps about available data
 
