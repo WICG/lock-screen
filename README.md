@@ -60,7 +60,7 @@ interface LockScreenData {
   Promise<sequence<DOMString>> getKeys();
 
   // Retrieves content of the data item identified by |key|.
-  Promise<(DOMString or undefined)> getData(Key key);
+  Promise<(DOMString or undefined)> getData(DOMString key);
 
   // Sets or replaces content of a data item.
   Promise<void> setData(DOMString key, DOMString data);
