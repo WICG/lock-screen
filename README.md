@@ -54,22 +54,19 @@ self.addEventListener('dataitemsavailable', event => {
 ## API Interface
 
 ```webidl
-alias Key = DOMString;
-alias Data = DOMString;
-
 [SecureContext]
 interface LockScreenData {
   // Gets references to all data items available to the app.
-  Promise<sequence<Key>> getKeys();
+  Promise<sequence<DOMString>> getKeys();
 
   // Retrieves content of the data item identified by |key|.
-  Promise<Data> getData(Key key);
+  Promise<(DOMString or undefined)> getData(Key key);
 
   // Sets or replaces content of a data item.
-  Promise<void> setData(Key key, Data data);
+  Promise<void> setData(DOMString key, DOMString data);
 
   // Deletes a data item.
-  Promise<void> deleteData(Key key);
+  Promise<void> deleteData(DOMString key);
 }
 
 // An event named "dataitemsavailable" is dispatched when new data items
