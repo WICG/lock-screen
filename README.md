@@ -18,14 +18,14 @@ Apps that want to be shown on the lock screen would indicate this by declaring a
 }
 ```
 
-To use the API users would start by calling `window.getLockScreenData()`.
+To use the API users would start by calling `navigator.getLockScreenData()`.
 
 ### Passing data between lock screen instance and unlocked instance
 
 Apps running on the lock screen must be isolated from regular user data such as cookies and local storage. This means there will be two instances of the app: the main instance that is used when the device is unlocked, and a separate instance that can be launched on the lock screen without access to user data. The app may use this API to send data from the lock screen instance to the unlocked instance of the app and vice versa.
 
 ```js
-const data = await window.getLockScreenData();
+const data = await navigator.getLockScreenData();
 await data.setData("my-key", "my-content");
 ```
 
