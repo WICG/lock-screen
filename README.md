@@ -1,3 +1,5 @@
+# *This effort is not longer being pursued*
+
 # Lock Screen API Explainer
 
 Authors: Louise Brett (loubrett), Glen Robertson (phoglenix)
