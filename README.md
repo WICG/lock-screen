@@ -1,4 +1,4 @@
-# *This effort is not longer being pursued*
+# *This effort is no longer being pursued*
 
 # Lock Screen API Explainer
 
